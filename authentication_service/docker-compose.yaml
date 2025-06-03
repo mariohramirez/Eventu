@@ -3,14 +3,7 @@ services:
     image: postgres:15.13
     container_name: postgres
     env_file:
-      - config.env  # Load variables from this file
-    environment:
-      #POSTGRES_DB: ${POSTGRES_DB}  # These will be pulled from config.env
-      #POSTGRES_USER: ${POSTGRES_USER}
-      #POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: auth_service_db  # These will be pulled from config.env
-      POSTGRES_USER: mainAdmin
-      POSTGRES_PASSWORD: Vehementi_47
+      - .env  # Load variables from this file
     volumes:
       - ./pgdata:/var/lib/postgresql/data
       - ./docker/pgdata/init.sql:/docker-entrypoint-initdb.d/init.sql
