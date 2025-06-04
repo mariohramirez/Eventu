@@ -1,19 +1,18 @@
-package com.eventu.event_service.controllers.request;
+package com.eventu.event_service.services.request;
 
 import com.eventu.event_service.model.StatusName;
 import com.eventu.event_service.model.VisibilityName;
 import lombok.Data;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 @Data
 public class EventRequest {
     private String title;
     private String description;
     private String shortDescription;
-    private LocalDate starTime;
+    private LocalDate startTime;
     private LocalDate endTime;
     private Long organizerId;
     private StatusName status;
@@ -22,6 +21,7 @@ public class EventRequest {
     private int minAttendees;
     private int currentAttendees;
     private LocalDate publishedAt;
-    //private Set<EventCategories> categories = new HashSet<>();
-    //private Set<EventTags> eventTags = new HashSet<>();
+    private LocationRequest locationRequest;
+    private List<CategoryRequest> categoryRequest;
+    private List<TagRequest> tagRequest;
 }

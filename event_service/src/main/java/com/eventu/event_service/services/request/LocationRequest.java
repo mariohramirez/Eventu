@@ -1,25 +1,12 @@
-package com.eventu.event_service.model;
+package com.eventu.event_service.services.request;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
 import java.math.BigDecimal;
 
-@Entity
-@Table(name="locations")
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-public class Location {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+@Data
+public class LocationRequest {
     private Long id;
-    private String locationNumber;
     private String name;
     private String description;
     private String addressLine1;
@@ -34,4 +21,5 @@ public class Location {
     private String timezone;
     private int capacity;
     private String[] facilities;
+
 }

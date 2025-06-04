@@ -26,7 +26,7 @@ public class Event {
     private String title;
     private String description;
     private String shortDescription;
-    private LocalDate starTime;
+    private LocalDate startTime;
     private LocalDate endTime;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id")
