@@ -1,4 +1,4 @@
-package com.eventu.authentication_service.controllers.request;
+package com.eventu.authentication_service.services.request;
 
 import lombok.Data;
 

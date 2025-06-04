@@ -1,19 +1,22 @@
 package com.eventu.authentication_service.services;
 
 import com.eventu.authentication_service.config.JwtProvider;
-import com.eventu.authentication_service.controllers.response.AuthResponse;
 import com.eventu.authentication_service.model.*;
 import com.eventu.authentication_service.model.gateway.RoleRepository;
 import com.eventu.authentication_service.model.gateway.UserProfileRepository;
 import com.eventu.authentication_service.model.gateway.UserRepository;
 import com.eventu.authentication_service.model.gateway.UserRoleRepository;
 import com.eventu.authentication_service.services.interfaces.AuthService;
+import com.eventu.authentication_service.services.request.LoginRequest;
 import com.eventu.authentication_service.services.request.RegisterRequest;
+import com.eventu.authentication_service.services.response.AuthResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +39,10 @@ public class AuthServiceImplementation implements AuthService {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtProvider jwtProvider;
+
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
+
 
     @Override
     public AuthResponse registerBaseUser
@@ -83,9 +90,28 @@ public class AuthServiceImplementation implements AuthService {
         return authResponse;
     }
 
+    @Override
+    public AuthResponse loginUser(LoginRequest loginRequest) {
+
+        String username = loginRequest.getEmail();
+        String password = loginRequest.getPassword();
+
+        Authentication authentication=authenticate(username, password);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        String token = jwtProvider.generateToken(authentication);
+
+        AuthResponse authResponse = new AuthResponse();
+        authResponse.setJwt(token);
+        authResponse.setMessage("Login exitoso");
+        authResponse.setStatus(true);
+
+        return authResponse;
+    }
+
+
     private void assignRole(User user, RoleName roleName, Long organizationId) {
         Role role = roleRepository.findByName(roleName);
-        System.out.println("Este es el rol encontrado"+role);
 
         UserRoleId userRoleId = new UserRoleId();
         userRoleId.setUserId(user.getId());
@@ -102,5 +128,20 @@ public class AuthServiceImplementation implements AuthService {
 
         userRoleRepository.save(userRole);
 
+    }
+
+    private Authentication authenticate(String username, String password) {
+
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
+
+        if(userDetails==null){
+            throw new BadCredentialsException("Nombre de usuario invalido...");
+        }
+
+        if(!passwordEncoder.matches(password, userDetails.getPassword())){
+            throw new BadCredentialsException("Contrasena invalida...");
+        }
+
+        return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 }
