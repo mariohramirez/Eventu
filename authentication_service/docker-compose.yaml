@@ -1,0 +1,11 @@
+services:
+  postgres:
+    image: postgres:15.13
+    container_name: postgres
+    env_file:
+      - .env  # Load variables from this file
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+      - ./docker/pgdata/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"  # Add this to expose the port
