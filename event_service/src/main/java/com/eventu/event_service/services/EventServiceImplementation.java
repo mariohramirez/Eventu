@@ -8,6 +8,7 @@ import com.eventu.event_service.services.request.EventRequest;
 import com.eventu.event_service.services.interfaces.EventService;
 import com.eventu.event_service.services.request.LocationRequest;
 import com.eventu.event_service.services.request.TagRequest;
+import com.eventu.event_service.services.response.EventResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class EventServiceImplementation implements EventService {
@@ -116,8 +118,62 @@ public class EventServiceImplementation implements EventService {
     }
 
     @Override
-    public Event updateEvent(Long id, EventRequest request) throws Exception {
-        return null;
+    public EventResponse updateEvent(Long id, EventRequest request) throws Exception {
+        // 1. Buscar el evento existente
+        Event existingEvent = findEventById(id);
+
+        // 2. Actualizar campos básicos
+        existingEvent.setTitle(request.getTitle());
+        existingEvent.setDescription(request.getDescription());
+        existingEvent.setShortDescription(request.getShortDescription());
+        existingEvent.setStartTime(request.getStartTime());
+        existingEvent.setEndTime(request.getEndTime());
+        existingEvent.setStatus(request.getStatus());
+        existingEvent.setVisibility(request.getVisibility());
+        existingEvent.setMaxAttendees(request.getMaxAttendees());
+        existingEvent.setMinAttendees(request.getMinAttendees());
+        existingEvent.setUpdatedAt(LocalDate.now());
+
+        // 3. Actualizar ubicación (si se proporciona en el request)
+        if(request.getLocationRequest() != null) {
+            LocationRequest locationRequest = request.getLocationRequest();
+            Location location;
+            if(locationRequest.getId() != null) {
+                location = locationService.findLocationById(locationRequest.getId());
+            } else {
+                location = locationService.createLocation(locationRequest);
+            }
+            existingEvent.setLocation(location);
+        }
+
+        // 4. Actualizar tags
+        if(request.getTagRequest() != null) {
+
+            // Luego agregamos los nuevos tags
+            for(TagRequest tagRequest : request.getTagRequest()) {
+                Tag tag;
+                if(tagRequest.getId() != null) {
+                    tag = tagServiceImplementation.findTagById(tagRequest.getId());
+                } else {
+                    tag = tagServiceImplementation.createTag(tagRequest);
+                }
+                assignTag(existingEvent, tag);
+            }
+        }
+
+        // 5. Actualizar categorías
+        if(request.getCategoryRequest() != null) {
+
+            // Luego agregamos las nuevas categorías
+            for(CategoryRequest categoryRequest : request.getCategoryRequest()) {
+                Category category = categoryServiceImplementation.findCategoryById(categoryRequest.getId());
+                assignCategory(existingEvent, category);
+            }
+        }
+
+        // 6. Guardar y retornar el evento actualizado
+        Event savedEvent = eventRepository.save(existingEvent);
+        return toDto(savedEvent);
     }
 
     @Override
@@ -127,10 +183,12 @@ public class EventServiceImplementation implements EventService {
     }
 
     @Override
-    public List<Event> getAllEvents() {
-        return eventRepository.findAll();
+    public List<EventResponse> getAllEvents() {
+        List<Event> events = eventRepository.findAll();
+        return events.stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
-
     @Override
     public List<Event> searchEvents(String keyword) {
         return null;
@@ -156,6 +214,19 @@ public class EventServiceImplementation implements EventService {
         eventTags.setTag(tag);
 
         eventTagRepository.save(eventTags);
+    }
+
+    private EventResponse toDto(Event event) {
+        EventResponse eventResponse = new EventResponse();
+        eventResponse.setTitle(event.getTitle());
+        eventResponse.setDescription(event.getDescription());
+        eventResponse.setShortDescription(event.getDescription());
+        eventResponse.setStartTime(event.getStartTime());
+        eventResponse.setEndTime(event.getEndTime());
+        eventResponse.setMaxAttendees(event.getMaxAttendees());
+        eventResponse.setMinAttendees(event.getMinAttendees());
+        eventResponse.setCurrentAttendees(event.getCurrentAttendees());
+        return eventResponse;
     }
 
     private void assignCategory(Event createdEvent, Category category) {
